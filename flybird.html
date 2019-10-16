@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        #game {
+            width: 800px;
+            height: 600px;
+            background: url(images/sky.png);
+            position: relative;
+            overflow: hidden;
+            margin: 50px auto;
+        }
+
+        #start {
+            width: 100px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            background-color: green;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            color: #fff;
+            border-radius: 10px;
+            transform: translate(-50%, -50%);
+            box-shadow: 5px -5px 5px rgba(255, 255, 255, 0.3) inset, -5px -5px 5px rgba(0, 0, 0, 0.5) inset;
+            cursor: pointer;
+        }
+
+        #stop {
+            width: 200px;
+            height: 50px;
+            line-height: 50px;
+            text-align: center;
+            background-color: yellow;
+            border: 2px solid red;
+            color: red;
+            font-weight: 700;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            display: none;
+        }
+
+        #score {
+            width: 100px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            background-color: skyblue;
+            border-radius: 10px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: purple;
+            z-index: 2;
+            font-size: 12px;
+            display: none;
+        }
+
+        #bird {
+            width: 34px;
+            height: 25px;
+            background: url(images/birds.png) no-repeat -10px -8px;
+            position: absolute;
+            top: 80px;
+            left: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game">
+        <div id="start">点击开始</div>
+        <div id="stop">结束</div>
+        <div id="score"></div>
+        <div id="bird"></div>
+    </div>
+    <!-- <script src="common.js"></script> -->
+    <script>
+        var game = document.getElementById('game');
+        var start = document.getElementById('start');
+        var stop = document.getElementById('stop');
+        var score = document.getElementById('score');
+        var birdEle = document.getElementById('bird');
+        // 初始化背景
+        var sky = {
+            x: 0
+        }
+        // 初始化小鸟
+        var bird = {
+            speedY: 0,
+            x: birdEle.offsetLeft, //返回当前元素的相对水平偏移位置的偏移容器
+            y: birdEle.offsetTop  //返回当前元素的相对垂直偏移位置的偏移容器
+        };
+        var playing = true;  //判断是否结束游戏
+        start.onclick = function () {
+            score.style.display = "block";
+            start.style.display = "none";
+            setInterval(function () {
+                if (playing) {
+                    // 通过背景的平移实现视角上的小鸟飞行
+                    sky.x -= 5;
+                    game.style.backgroundPositionX = sky.x + 'px';
+                    //让小鸟匀速下降
+                    bird.speedY += 1;
+                    bird.y += bird.speedY;
+
+                    //判断小鸟触碰边界出局
+                    if (bird.y < 0) {
+                        bird.y = 0;
+                        playing = false;
+                    }
+                    if (bird.y + birdEle.offsetHeight > 600) {
+                        bird.y = 600 - birdEle.offsetHeight;
+                        playing = false;
+                    }
+                    birdEle.style.top = bird.y + 'px';
+                } else {
+                    setTimeout(function () {
+                        stop.style.display = 'block'
+                    }, 100)
+                }
+            }, 30);
+
+
+            //点击屏幕范围内让bird上升10px；
+            document.onclick = function () {
+                //bird.y+=bird.speedY相当于减10
+                bird.speedY = -10;
+            }
+
+            // 创建管道
+            function createPipe(position) {
+                var pipe = {};
+                pipe.x = position;
+                pipe.upHeight = 100 + parseInt(Math.random() * 200); //上管道在150-300之间的随机数
+                pipe.downHeight = 600 - pipe.upHeight;  //下管道的高
+                pipe.downTop = pipe.upHeight + 200;  //下管道距离顶部的距离
+
+                // 创建上管道
+                var upPipe = document.createElement('div');
+                upPipe.style.width = '52px';
+                upPipe.style.height = pipe.upHeight + 'px';
+                upPipe.style.background = "url(images/pipe2.png) no-repeat center bottom";
+                upPipe.style.position = 'absolute';
+                upPipe.style.top = '0px';
+                upPipe.style.left = pipe.x + 'px';
+                game.appendChild(upPipe);
+
+
+                // 创建下管道
+                var downPipe = document.createElement("div");
+                downPipe.style.width = '52px';
+                downPipe.style.height = pipe.downHeight + 'px';
+                downPipe.style.background = "url(images/pipe1.png) no-repeat center top";
+                downPipe.style.position = "absolute";
+                downPipe.style.top = pipe.downTop + 'px';
+                downPipe.style.left = pipe.x + 'px';
+                game.appendChild(downPipe);
+
+                // 让管道动起来
+                var num = 0;
+                setInterval(function () {
+                    if (playing) {
+                        num++;
+                        score.textContent = "分数：" + num;
+                        // 实现越来越快
+                        var step = [5, 8, 12, 16, 20];
+                        if (num < 500) {
+                            pipe.x -= step[0];
+                        } else if (num >= 500 && num < 1500) {
+                            pipe.x -= step[1];
+                        } else if (num >= 1500 && num < 3000) {
+                            pipe.x -= step[2];
+                        } else if (num >= 3000 && num < 8000) {
+                            pipe.x -= step[3];
+                        } else {
+                            pipe.x -= step[4];
+                        }
+                        console.log(num);
+                        // 移动管道
+                        upPipe.style.left = pipe.x + 'px';
+                        downPipe.style.left = pipe.x + 'px';
+                        // 移动到边界处
+                        if (pipe.x < -52) {
+                            pipe.x = 800;
+                        }
+                        var upCheck = bird.x + 34 > pipe.x && bird.x < pipe.x + 52 && bird.y < pipe.upHeight;
+                        var downCheck = bird.x + 34 > pipe.x && bird.x < pipe.x + 52 && bird.y + 25 > pipe.upHeigth + 200;
+                        if (upCheck || downCheck) {
+                            playing = false;
+                        }
+                    } else {
+                        setTimeout(function () {
+                            stop.style.display = 'block'
+                        }, 100)
+                    }
+                }, 30)
+            }
+
+            createPipe(400);
+            createPipe(600);
+            createPipe(800);
+            createPipe(1000);
+        }
+    </script>
+</body>
+
+</html>
